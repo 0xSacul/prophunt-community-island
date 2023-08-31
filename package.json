@@ -1,0 +1,40 @@
+{
+  "name": "prophunt-community-island",
+  "version": "1.0.0",
+  "description": "Prophunt Gamemode for Sunflower Land Community Island",
+  "scripts": {
+    "build": "npm run clean && esbuild ./src/Scene.ts --bundle --minify --tsconfig=tsconfig.json --outfile=public/Scene.js",
+    "dev": "npm run clean && esbuild ./src/Scene.ts --bundle --loader:.png=file --loader:.webp=file --minify --watch --tsconfig=tsconfig.json --outfile=public/Scene.js",
+    "clean": "rimraf public/Scene.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xSacul/prophunt-community-island.git"
+  },
+  "keywords": [
+    "Sunflower",
+    "Land",
+    "Community",
+    "Island",
+    "Prophunt"
+  ],
+  "author": "0xSacul",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/0xSacul/prophunt-community-island/issues"
+  },
+  "homepage": "https://github.com/0xSacul/prophunt-community-island#readme",
+  "dependencies": {
+    "classnames": "^2.3.2",
+    "esbuild": "0.18.15",
+    "phaser": "^3.60.0",
+    "react": "^18.2.0",
+    "react-bootstrap": "^2.8.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/react-dom": "^18.2.7",
+    "rimraf": "^5.0.1"
+  }
+}
