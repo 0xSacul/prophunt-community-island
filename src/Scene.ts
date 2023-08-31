@@ -18,6 +18,7 @@ export const BASE_URL = "http://localhost:5500/public/";
 let CURRENT_ZONE = "neutral" as "red" | "blue" | "neutral";
 let NEXT_MATCH_TIMESTAMP = Date.now() / 1000 + 15;
 let NEX_MATCH_REMAINING_TIME = "";
+let IS_DISCOVERING_ISLAND = false;
 
 export abstract class ExternalScene extends window.BaseScene {
   constructor(options: ExternalSceneOptions) {
@@ -159,6 +160,7 @@ export abstract class ExternalScene extends window.BaseScene {
       delay: 1000,
       loop: true,
       callback: () => {
+        if (IS_DISCOVERING_ISLAND && CURRENT_ZONE !== "neutral") return;
         this.DefineNextMatchRemainingTime();
       },
     });
@@ -217,19 +219,13 @@ export abstract class ExternalScene extends window.BaseScene {
         this.currentPlayer.y
       )
     ) {
-      this.RenderCustomComponents(Notification, {
-        text:
-          "Next Match is starting in " +
-          this.DefineNextMatchRemainingTime() +
-          " minutes!",
-
-        icon: "timer",
-      });
       CURRENT_ZONE = "neutral";
     }
   }
 
   DefineNextMatchRemainingTime() {
+    if (IS_DISCOVERING_ISLAND) return;
+
     const now = new Date().getTime();
     const distance = NEXT_MATCH_TIMESTAMP * 1000 - now;
     const minutes = Math.floor(
@@ -283,8 +279,10 @@ export abstract class ExternalScene extends window.BaseScene {
     const redCoords = { x: 1020, y: 450 };
 
     // Disable player follow for the entire animation sequence
+    IS_DISCOVERING_ISLAND = true;
     camera.stopFollow();
     window.closeModal();
+    this.UnRenderCustomComponents();
 
     // Transition to main coordinates
     this.time.addEvent({
@@ -326,6 +324,7 @@ export abstract class ExternalScene extends window.BaseScene {
           delay: 5000,
           callback: () => {
             camera.startFollow(player);
+            IS_DISCOVERING_ISLAND = false;
             this.UnRenderCustomComponents();
             this.RenderCustomComponents(Notification, {
               text: "Next Match is starting in 5 minutes!",

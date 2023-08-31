@@ -1,4 +1,4 @@
-import ExternalScene from "./Scene";
+import { ExternalScene } from "./Scene";
 
 export interface Clothing {
   body: string;
