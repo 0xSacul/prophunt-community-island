@@ -1,9 +1,7 @@
-import { Clothing, SaculNPC, ExternalSceneOptions } from "./types";
+import { Clothing, SaculNPC, PlayerState, GameState, Player } from "./types";
 import Phaser from "phaser";
 import React from "react";
 import ReactDOM from "react-dom";
-
-import { PlayScene } from "./PlayScene";
 
 import {
   ModalOne,
@@ -11,17 +9,16 @@ import {
   ModalThree,
   ModalEnd,
 } from "./CustomComponents/DiscoverIsland";
-import { Notification } from "./CustomComponents/Notification";
+import { Notification, PropHunt_HUD } from "./CustomComponents/HUD";
 
 export const BASE_URL = "http://localhost:5500/public/";
 
-let CURRENT_ZONE = "neutral" as "red" | "blue" | "neutral";
 let NEXT_MATCH_TIMESTAMP = Date.now() / 1000 + 15;
 let NEX_MATCH_REMAINING_TIME = "";
 let IS_DISCOVERING_ISLAND = false;
 
 export abstract class ExternalScene extends window.BaseScene {
-  constructor(options: ExternalSceneOptions) {
+  constructor() {
     super({
       name: "local",
       map: {
@@ -30,7 +27,7 @@ export abstract class ExternalScene extends window.BaseScene {
       player: {
         spawn: {
           x: 760, // 256  824
-          y: 635, // 566  140
+          y: 1280, // 566  140
         },
       },
       mmo: {
@@ -39,6 +36,22 @@ export abstract class ExternalScene extends window.BaseScene {
         //roomId: "local", // Need to be ingals_main once fixed on SFL side.
       },
     });
+
+    this.playerState = {
+      status: "waiting",
+      health: "alive",
+      prop: "none",
+      team: "neutral",
+    } as PlayerState;
+
+    this.gameState = {
+      teams: {
+        red: [],
+        blue: [],
+      },
+      status: "waiting",
+      nextRound: Date.now() + 60000,
+    } as GameState;
   }
 
   preload() {
@@ -74,11 +87,11 @@ export abstract class ExternalScene extends window.BaseScene {
     this.initialiseNPCs([
       {
         x: 745,
-        y: 610,
+        y: 1250,
         npc: "Sacul",
         clothing: SaculNPC,
         onClick: () => {
-          if (this.CheckPlayerDistance(745, 610)) return;
+          if (this.CheckPlayerDistance(745, 1240)) return;
 
           window.openModal({
             type: "speaking",
@@ -112,8 +125,8 @@ export abstract class ExternalScene extends window.BaseScene {
       },
     ]);
 
-    const red_team_flag = this.add.sprite(895, 450, "red_team_flag");
-    const blue_team_flag = this.add.sprite(690, 450, "blue_team_flag");
+    const red_team_flag = this.add.sprite(900, 1090, "red_team_flag");
+    const blue_team_flag = this.add.sprite(690, 1090, "blue_team_flag");
     this.anims.create({
       key: "red_team_flag",
       frames: this.anims.generateFrameNumbers("red_team_flag", {
@@ -145,69 +158,48 @@ export abstract class ExternalScene extends window.BaseScene {
     spaceBar.on("down", () => {
       this.scene.start("default");
     });
-
-    this.RenderCustomComponents(Notification, {
-      text:
-        "Next Match is starting in " +
-        this.DefineNextMatchRemainingTime() +
-        " minutes!",
-
-      icon: "timer",
-    });
-
-    // redefine next match remaining time every 1 second
-    this.time.addEvent({
-      delay: 1000,
-      loop: true,
-      callback: () => {
-        if (IS_DISCOVERING_ISLAND && CURRENT_ZONE !== "neutral") return;
-        this.DefineNextMatchRemainingTime();
-      },
-    });
   }
 
   update() {
     super.update();
 
-    // define the red & blue zones by creating a radius around the flags and checking if the player is within that radius
-    const red_zone = new Phaser.Geom.Circle(1020, 450, 70);
-    const blue_zone = new Phaser.Geom.Circle(560, 450, 70);
+    this.checkZones();
+    this.RenderHUD();
+  }
+
+  checkZones() {
+    const red_zone = new Phaser.Geom.Circle(1020, 1090, 70);
+    const blue_zone = new Phaser.Geom.Circle(560, 1090, 70);
 
     // check if the player is within the red zone
     if (
-      CURRENT_ZONE !== "red" &&
+      this.playerState.team !== "red" &&
       Phaser.Geom.Circle.Contains(
         red_zone,
         this.currentPlayer.x,
         this.currentPlayer.y
       )
     ) {
-      this.RenderCustomComponents(Notification, {
-        text: "You are in the red zone!",
-        icon: "red_flag",
-      });
-      CURRENT_ZONE = "red";
+      this.playerState.team = "red";
+      this.gameState.teams.red.push(this.currentPlayer);
     }
 
     // check if the player is within the blue zone
     if (
-      CURRENT_ZONE !== "blue" &&
+      this.playerState.team !== "blue" &&
       Phaser.Geom.Circle.Contains(
         blue_zone,
         this.currentPlayer.x,
         this.currentPlayer.y
       )
     ) {
-      this.RenderCustomComponents(Notification, {
-        text: "You are in the blue zone!",
-        icon: "blue_flag",
-      });
-      CURRENT_ZONE = "blue";
+      this.playerState.team = "blue";
+      this.gameState.teams.blue.push(this.currentPlayer);
     }
 
     // check if the player is within neither zone
     if (
-      CURRENT_ZONE !== "neutral" &&
+      this.playerState.team !== "neutral" &&
       !Phaser.Geom.Circle.Contains(
         red_zone,
         this.currentPlayer.x,
@@ -219,7 +211,20 @@ export abstract class ExternalScene extends window.BaseScene {
         this.currentPlayer.y
       )
     ) {
-      CURRENT_ZONE = "neutral";
+      // remove the player from any team they were previously in
+      if (this.playerState.team === "red") {
+        this.gameState.teams.red = this.gameState.teams.red.filter(
+          (player: { sessionId: any }) =>
+            player.sessionId !== this.currentPlayer.sessionId
+        );
+      } else if (this.playerState.team === "blue") {
+        this.gameState.teams.blue = this.gameState.teams.blue.filter(
+          (player: { sessionId: any }) =>
+            player.sessionId !== this.currentPlayer.sessionId
+        );
+      }
+
+      this.playerState.team = "neutral";
     }
   }
 
@@ -234,16 +239,7 @@ export abstract class ExternalScene extends window.BaseScene {
     const seconds = Math.floor((distance % (1000 * 60)) / 1000).toString();
 
     NEX_MATCH_REMAINING_TIME = minutes + ":" + seconds;
-
-    if (CURRENT_ZONE === "neutral") {
-      this.RenderCustomComponents(Notification, {
-        text:
-          distance > 0
-            ? "Next Match is starting in " + NEX_MATCH_REMAINING_TIME + " !"
-            : "Next Match is starting now!",
-        icon: distance > 0 ? "timer" : "play",
-      });
-    }
+    return NEX_MATCH_REMAINING_TIME;
   }
 
   CheckPlayerDistance(x: number, y: number) {
@@ -254,6 +250,25 @@ export abstract class ExternalScene extends window.BaseScene {
       y
     );
     return player_distance > 40;
+  }
+
+  RenderHUD() {
+    if (IS_DISCOVERING_ISLAND) return;
+
+    this.RenderCustomComponents(PropHunt_HUD, {
+      playerState: this.playerState,
+      gameState: this.gameState,
+    });
+  }
+
+  ReRenderCustomComponents() {
+    this.RenderCustomComponents(PropHunt_HUD, {
+      status: this.state.status,
+      next_match: this.state.next_match,
+      player_red: this.state.player_red,
+      player_blue: this.state.player_blue,
+      team: this.state.team,
+    });
   }
 
   RenderCustomComponents(component: any, props: any = {}) {
@@ -274,9 +289,9 @@ export abstract class ExternalScene extends window.BaseScene {
     const camera = this.cameras.main;
     const player = this.currentPlayer;
 
-    const mainCoords = { x: 785, y: 520 };
-    const blueCoords = { x: 560, y: 450 };
-    const redCoords = { x: 1020, y: 450 };
+    const mainCoords = { x: 785, y: 1170 };
+    const blueCoords = { x: 560, y: 1090 };
+    const redCoords = { x: 1020, y: 1090 };
 
     // Disable player follow for the entire animation sequence
     IS_DISCOVERING_ISLAND = true;
@@ -326,10 +341,6 @@ export abstract class ExternalScene extends window.BaseScene {
             camera.startFollow(player);
             IS_DISCOVERING_ISLAND = false;
             this.UnRenderCustomComponents();
-            this.RenderCustomComponents(Notification, {
-              text: "Next Match is starting in 5 minutes!",
-              icon: "timer",
-            });
           },
           callbackScope: this,
         });

@@ -31,7 +31,7 @@ export const ModalTwo: React.FC = () => {
         onClose={() => {}}
         message={[
           {
-            text: "Here, it's the Blue Team Island, also known as the Props Team. Go on this Island the start the next match as a Prop. As long as you stay on this Island, you will be a Prop.",
+            text: "Here, it's the Blue Team Island, also known as the Props Team. Go on this Island to start the next match as a Prop. As long as you stay on this Island, you will be a Prop.",
           },
         ]}
         showContinue={false}
@@ -50,7 +50,7 @@ export const ModalThree: React.FC = () => {
         onClose={() => {}}
         message={[
           {
-            text: "And here, it's the Red Team Island, also known as the Hunters Team. Go on this Island the start the next match as a Hunter. As long as you stay on this Island, you will be a Hunter.",
+            text: "And here, it's the Red Team Island, also known as the Hunters Team. Go on this Island to start the next match as a Hunter. As long as you stay on this Island, you will be a Hunter.",
           },
         ]}
         showContinue={false}

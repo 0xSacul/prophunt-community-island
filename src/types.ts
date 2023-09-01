@@ -20,6 +20,15 @@ export const SaculNPC: Clothing = {
   tool: "Dawn Lamp",
 };
 
+export type Player = {
+  sessionId: string;
+  farmId: number;
+  x: number;
+  y: number;
+  clothing: Clothing;
+  sceneId: string;
+};
+
 type CommunityModals = {
   type: "speaking" | "loading";
   messages: {
@@ -28,28 +37,30 @@ type CommunityModals = {
   }[];
 };
 
-export type ExternalSceneOptions = {
-  name: string;
-  map: {
-    tilesetUrl?: string;
-    json: any;
-    padding?: [number, number];
+type GameProps =
+  | "wooden_box"
+  | "wooden_crate"
+  | "wooden_barrel"
+  | "wooden_seat"
+  | "rock"
+  | "bush"
+  | "tree"
+  | "none";
+
+export type PlayerState = {
+  status: "waiting" | "playing";
+  health: "alive" | "dead";
+  prop: GameProps;
+  team: "red" | "blue" | "neutral";
+};
+
+export type GameState = {
+  teams: {
+    red: Player[];
+    blue: Player[];
   };
-  mmo?: {
-    enabled: boolean;
-    url?: string;
-    serverId?: string;
-    sceneId?: string;
-  };
-  controls?: {
-    enabled: boolean; // Default to true
-  };
-  player?: {
-    spawn: {
-      x: number;
-      y: number;
-    };
-  };
+  status: "waiting" | "playing";
+  nextRound: number;
 };
 
 declare global {
