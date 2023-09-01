@@ -32,8 +32,9 @@ export abstract class ExternalScene extends window.BaseScene {
       },
       mmo: {
         enabled: true,
-        //url: "ws://localhost:2567/",
-        //roomId: "local", // Need to be ingals_main once fixed on SFL side.
+        url: "ws://localhost:2567/",
+        roomId: "phuntRoom",
+        serverId: "phuntRoom",
       },
     });
 
