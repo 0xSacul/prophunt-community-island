@@ -18,7 +18,7 @@ import {
 } from "./CustomComponents/DiscoverIsland";
 import { Notification, PropHunt_HUD } from "./CustomComponents/HUD";
 
-export const BASE_URL = "https://0xsacul.github.io/ingals-community-island/";
+export const BASE_URL = "https://0xsacul.github.io/prophunt-community-island/";
 
 let NEXT_MATCH_TIMESTAMP = Date.now() / 1000 + 15;
 let NEX_MATCH_REMAINING_TIME = "";
@@ -44,6 +44,23 @@ export abstract class ExternalScene extends window.BaseScene {
         serverId: "prop_hunt",
       },
     });
+
+    // REMOVE THIS ASAP
+    this.playerState = {
+      status: "waiting",
+      health: "alive",
+      prop: "none",
+      team: "neutral",
+    } as PlayerState;
+
+    this.gameState = {
+      teams: {
+        red: [],
+        blue: [],
+      },
+      status: "waiting",
+      nextRound: Date.now() + 60000,
+    } as GameState;
   }
 
   preload() {
@@ -159,8 +176,6 @@ export abstract class ExternalScene extends window.BaseScene {
     });
 
     console.log("PLAYER", this.currentPlayer);
-    this.playerState.sessionId = Math.random().toString(36).substr(2, 9);
-    this.currentPlayer.sessionId = this.playerState.sessionId;
     //this.ServerConnection();
     this.PlaceDefaultProps();
   }

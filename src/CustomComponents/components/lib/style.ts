@@ -1,5 +1,5 @@
 export const PIXEL_SCALE = 2.625;
-const BASE_URL = "https://0xsacul.github.io/ingals-community-island/";
+const BASE_URL = "https://0xsacul.github.io/prophunt-community-island/";
 
 const lightBorder = BASE_URL + "assets/panel/light_border.png";
 const grayBorder = BASE_URL + "assets/panel/gray_border.png";
