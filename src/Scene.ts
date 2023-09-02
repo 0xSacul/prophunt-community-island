@@ -166,14 +166,14 @@ export abstract class ExternalScene extends window.BaseScene {
     blue_team_flag.anims.play("blue_team_flag", true);
 
     // For local testing, allow Scene refresh with spacebar
-    this.events.on("shutdown", () => {
+    /* this.events.on("shutdown", () => {
       this.cache.tilemap.remove("local");
       this.scene.remove("local");
     });
     const spaceBar = this.input.keyboard.addKey("SPACE");
     spaceBar.on("down", () => {
       this.scene.start("default");
-    });
+    }); */
 
     console.log("PLAYER", this.currentPlayer);
     //this.ServerConnection();
