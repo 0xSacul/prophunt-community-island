@@ -27,6 +27,10 @@ export type Player = {
   y: number;
   clothing: Clothing;
   sceneId: string;
+  prop: GameProps;
+  propSprite: any;
+  health: "alive" | "dead";
+  status: "waiting" | "playing";
 };
 
 type CommunityModals = {
@@ -37,14 +41,12 @@ type CommunityModals = {
   }[];
 };
 
-type GameProps =
-  | "wooden_box"
-  | "wooden_crate"
-  | "wooden_barrel"
-  | "wooden_seat"
-  | "rock"
-  | "bush"
-  | "tree"
+export type GameProps =
+  | "wooden_box" // done
+  | "wooden_seat" // done
+  | "rock" // done
+  | "bush" // done
+  | "tree" // done
   | "none";
 
 export type PlayerState = {
@@ -65,6 +67,7 @@ export type GameState = {
 
 declare global {
   interface Window {
+    serverEvents: (event: string, cb: (data: any) => void) => void;
     BaseScene: any;
     PlayScene: any;
     openModal: (modal: CommunityModals) => void;

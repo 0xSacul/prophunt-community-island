@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { InnerPanel } from "./components/Panel";
 import { PlayerState, GameState } from "../types";
 
-const BASE_URL = "http://localhost:5500/public";
+const BASE_URL = "https://0xsacul.github.io/ingals-community-island/";
 
 const TimerIcon = `${BASE_URL}/assets/timer.gif`;
 const PlayIcon = `${BASE_URL}/assets/play.png`;

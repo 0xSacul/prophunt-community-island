@@ -1,4 +1,11 @@
-import { Clothing, SaculNPC, PlayerState, GameState, Player } from "./types";
+import {
+  Clothing,
+  SaculNPC,
+  PlayerState,
+  GameState,
+  Player,
+  GameProps,
+} from "./types";
 import Phaser from "phaser";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -11,7 +18,7 @@ import {
 } from "./CustomComponents/DiscoverIsland";
 import { Notification, PropHunt_HUD } from "./CustomComponents/HUD";
 
-export const BASE_URL = "http://localhost:5500/public/";
+export const BASE_URL = "https://0xsacul.github.io/ingals-community-island/";
 
 let NEXT_MATCH_TIMESTAMP = Date.now() / 1000 + 15;
 let NEX_MATCH_REMAINING_TIME = "";
@@ -32,27 +39,11 @@ export abstract class ExternalScene extends window.BaseScene {
       },
       mmo: {
         enabled: true,
-        url: "ws://localhost:2567/",
-        roomId: "phuntRoom",
-        serverId: "phuntRoom",
+        url: "wss://plaza.sacul.cloud",
+        roomId: "prop_hunt",
+        serverId: "prop_hunt",
       },
     });
-
-    this.playerState = {
-      status: "waiting",
-      health: "alive",
-      prop: "none",
-      team: "neutral",
-    } as PlayerState;
-
-    this.gameState = {
-      teams: {
-        red: [],
-        blue: [],
-      },
-      status: "waiting",
-      nextRound: Date.now() + 60000,
-    } as GameState;
   }
 
   preload() {
@@ -80,6 +71,13 @@ export abstract class ExternalScene extends window.BaseScene {
       frameWidth: 11,
       frameHeight: 16,
     });
+
+    // Props
+    this.load.image("wooden_box", BASE_URL + "props/wooden_box.png");
+    this.load.image("wooden_seat", BASE_URL + "props/wooden_seat.png");
+    this.load.image("rock", BASE_URL + "props/rock.png");
+    this.load.image("bush", BASE_URL + "props/bush.png");
+    this.load.image("tree", BASE_URL + "props/tree.png");
   }
 
   create() {
@@ -159,13 +157,80 @@ export abstract class ExternalScene extends window.BaseScene {
     spaceBar.on("down", () => {
       this.scene.start("default");
     });
+
+    console.log("PLAYER", this.currentPlayer);
+    this.playerState.sessionId = Math.random().toString(36).substr(2, 9);
+    this.currentPlayer.sessionId = this.playerState.sessionId;
+    //this.ServerConnection();
+    this.PlaceDefaultProps();
   }
 
-  update() {
-    super.update();
+  PlaceDefaultProps() {
+    this.placeProp("wooden_box", 725, 1120);
+    this.placeProp("wooden_seat", 760, 1120);
+    this.placeProp("rock", 785, 1120);
+    this.placeProp("bush", 805, 1120);
+    this.placeProp("tree", 830, 1120);
+  }
+
+  placeProp(prop: GameProps, x: number, y: number) {
+    const propSprite = this.add.sprite(x, y, prop);
+
+    // collision
+    this.physics.add.existing(propSprite);
+    propSprite.body.setCollideWorldBounds(true);
+    propSprite.body.setImmovable(true);
+
+    // interaction
+    propSprite.setInteractive();
+    propSprite.on("pointerdown", () => {
+      if (this.CheckPlayerDistance(x, y)) return;
+      console.log("clicked on prop", prop);
+      this.transformPlayerToProp(this.currentPlayer, prop);
+    });
+  }
+
+  transformPlayerToProp(player: Player, prop: GameProps) {
+    // hide the player, and set their prop and make the prop follow them
+
+    this.currentPlayer.prop = prop;
+    this.currentPlayer.status = "playing";
+    this.currentPlayer.health = "alive";
+
+    if (player.propSprite) {
+      player.propSprite.destroy();
+      player.propSprite = null;
+    }
+
+    this.currentPlayer.setVisible(false);
+  }
+
+  update(time: number, delta: number): void {
+    super.update(time, delta);
 
     this.checkZones();
     this.RenderHUD();
+    this.renderProps();
+  }
+
+  renderProps() {
+    const players = [this.currentPlayer];
+
+    if (!players) return;
+
+    players.forEach((player: Player) => {
+      if (player.prop && player.prop !== "none") {
+        if (player.propSprite) {
+          player.propSprite.x = player.x;
+          player.propSprite.y = player.y;
+        } else {
+          const propSprite = this.add.sprite(player.x, player.y, player.prop);
+          propSprite.setInteractive();
+
+          player.propSprite = propSprite;
+        }
+      }
+    });
   }
 
   checkZones() {
@@ -182,7 +247,7 @@ export abstract class ExternalScene extends window.BaseScene {
       )
     ) {
       this.playerState.team = "red";
-      this.gameState.teams.red.push(this.currentPlayer);
+      this.gameState.teams.red.push(this.playerState);
     }
 
     // check if the player is within the blue zone
@@ -195,7 +260,7 @@ export abstract class ExternalScene extends window.BaseScene {
       )
     ) {
       this.playerState.team = "blue";
-      this.gameState.teams.blue.push(this.currentPlayer);
+      this.gameState.teams.blue.push(this.playerState);
     }
 
     // check if the player is within neither zone
